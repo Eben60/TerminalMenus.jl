@@ -1,0 +1,8 @@
+name = "TerminalMenus"
+uuid = "e51d7f76-d3fb-4251-851d-1e49b8315b3e"
+
+[deps]
+REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
+
+[compat]
+REPL = "1.11.0"
