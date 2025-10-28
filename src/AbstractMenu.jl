@@ -100,6 +100,13 @@ Alternatively, implement `numoptions`, in which case `options` is not needed.
 options(m::AbstractMenu) = error("unimplemented")
 
 """
+    cancellation_marker(m::AbstractMenu)
+
+#TODO
+"""
+cancellation_marker(m::AbstractMenu) = :undefined
+
+"""
     writeline(buf::IO, m::AbstractMenu, idx::Int, iscursor::Bool)
 
 Write the option at index `idx` to `buf`. `iscursor`, if `true`, indicates that this
@@ -242,6 +249,8 @@ function request(term::REPL.Terminals.TTYTerminal, m::AbstractMenu; cursor::Unio
         end
     end
     !suppress_output && println(term.out_stream)
+
+    selected(m) == cancellation_marker(m) && return m.on_cancel
 
     return selected(m)
 end

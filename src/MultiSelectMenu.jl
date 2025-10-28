@@ -32,9 +32,13 @@ mutable struct MultiSelectMenu{C} <: _ConfiguredMenu{C}
     pagesize::Int
     pageoffset::Int
     selected::Set{Int}
+    on_cancel::Union{Nothing, Set{Int}}
     config::C
 end
 
+
+MultiSelectMenu(options, pagesize, pageoffset, selected, config) = 
+    MultiSelectMenu(options, pagesize, pageoffset, selected, Set{Int64}(), config)
 
 """
 
@@ -55,7 +59,7 @@ Any additional keyword arguments will be passed to [`TerminalMenus.MultiSelectCo
 !!! compat "Julia 1.6"
     The `selected` argument requires Julia 1.6 or later.
 """
-function MultiSelectMenu(options::Array{String,1}; pagesize::Int=10, selected=Int[], warn::Bool=true, legacy_cancel=true, kwargs...)
+function MultiSelectMenu(options::Array{String,1}; on_cancel=Set{Int64}(), pagesize::Int=10, selected=Int[], warn::Bool=true, kwargs...)
     length(options) < 1 && error("MultiSelectMenu must have at least one option")
 
     # if pagesize is -1, use automatic paging
@@ -71,12 +75,11 @@ function MultiSelectMenu(options::Array{String,1}; pagesize::Int=10, selected=In
         push!(_selected, item)
     end
 
-    if !isempty(kwargs)
-        conf = legacy_cancel ? MultiSelectConfig : AbortableMultiSelectConfig
-        MultiSelectMenu(options, pagesize, pageoffset, _selected, conf(; kwargs...))
+    if isnothing(on_cancel) || !isempty(kwargs)
+        MultiSelectMenu(options, pagesize, pageoffset, _selected, on_cancel, MultiSelectConfig(; kwargs...))
     else
         warn && Base.depwarn("Legacy `MultiSelectMenu` interface is deprecated, set a configuration option such as `MultiSelectMenu(options; charset=:ascii)` to trigger the new interface.", :MultiSelectMenu)
-        MultiSelectMenu(options, pagesize, pageoffset, _selected, CONFIG)
+        MultiSelectMenu(options, pagesize, pageoffset, _selected, on_cancel, CONFIG)
     end
 
 end
@@ -91,11 +94,9 @@ header(m::MultiSelectMenu) = "[press: Enter=toggle, a=all, n=none, d=done, q=abo
 
 options(m::MultiSelectMenu) = m.options
 
-cancel(m::MultiSelectMenu) = m.selected = Set{Int}()
+cancellation_marker(m::MultiSelectMenu) = Set{Int}([-1])
 
-header(m::MultiSelectMenu{AbortableMultiSelectConfig}) = "[press: q=quit, d=done, a=all, n=none]"
-cancel(m::MultiSelectMenu{AbortableMultiSelectConfig}) = m.quit = true #TODO - should it be m.quit = true ??
-selected(m::MultiSelectMenu{AbortableMultiSelectConfig}) = m.quit ? nothing : m.selected
+cancel(m::MultiSelectMenu) = m.selected = cancellation_marker(m)
 
 # Do not exit menu when a user selects one of the options
 function pick(menu::MultiSelectMenu, cursor::Int)

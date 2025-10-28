@@ -17,19 +17,6 @@ struct MultiSelectConfig <: AbstractConfig
     unchecked::String
 end
 
-struct AbortableMultiSelectConfig <: AbstractConfig
-    ms_config::MultiSelectConfig
-end
-
-AbortableMultiSelectConfig(; kwargs...) = AbortableMultiSelectConfig(MultiSelectConfig(; kwargs...))
-
-Base.getproperty(obj::AbortableMultiSelectConfig, name::Symbol) = get_nestedproperty(obj, name, :ms_config)
-
-function get_nestedproperty(obj, name::Symbol, nestedfield::Symbol)
-    hasfield(obj |> typeof, name) && return getfield(obj, name)
-    return getproperty(getproperty(obj, nestedfield), name)
-end
-
 """
     Config(; scroll_wrap=false, ctrl_c_interrupt=true, charset=:ascii, cursor::Char, up_arrow::Char, down_arrow::Char)
 
@@ -111,6 +98,8 @@ function MultiSelectConfig(;
     end
     return MultiSelectConfig(Config(; charset=charset, kwargs...), checked, unchecked)
 end
+
+
 
 ## Below is the old-style CONFIG interface, kept for backwards compatibility.
 ## Not recommended for any new menu types.

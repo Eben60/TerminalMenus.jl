@@ -25,9 +25,12 @@ mutable struct RadioMenu{C} <: _ConfiguredMenu{C}
     pagesize::Int
     pageoffset::Int
     selected::Int
+    on_cancel::Union{Nothing, Int}
     config::C
 end
 
+RadioMenu(options, keybindings, pagesize, pageoffset, selected, config) =
+    RadioMenu(options, keybindings, pagesize, pageoffset, selected, -1, config)
 
 """
 
@@ -50,7 +53,7 @@ Any additional keyword arguments will be passed to [`TerminalMenus.Config`](@ref
 !!! compat "Julia 1.8"
     The `keybindings` argument requires Julia 1.8 or later.
 """
-function RadioMenu(options::Array{String,1}; pagesize::Int=10, warn::Bool=true, keybindings::Vector{Char}=Char[], kwargs...)
+function RadioMenu(options::Array{String,1}; on_cancel=-1, pagesize::Int=10, warn::Bool=true, keybindings::Vector{Char}=Char[], kwargs...)
     length(options) < 1 && error("RadioMenu must have at least one option")
     length(keybindings) in [0, length(options)] || error("RadioMenu must have either no keybindings, or one per option")
 
@@ -64,11 +67,11 @@ function RadioMenu(options::Array{String,1}; pagesize::Int=10, warn::Bool=true, 
     pageoffset = 0
     selected = -1 # none
 
-    if !isempty(kwargs)
-        RadioMenu(options, keybindings, pagesize, pageoffset, selected, Config(; kwargs...))
+    if isnothing(on_cancel) || !isempty(kwargs)
+        RadioMenu(options, keybindings, pagesize, pageoffset, selected, on_cancel, Config(; kwargs...))
     else
         warn && Base.depwarn("Legacy `RadioMenu` interface is deprecated, set a configuration option such as `RadioMenu(options; charset=:ascii)` to trigger the new interface.", :RadioMenu)
-        RadioMenu(options, keybindings, pagesize, pageoffset, selected, CONFIG)
+        RadioMenu(options, keybindings, pagesize, pageoffset, selected, on_cancel, CONFIG)
     end
 end
 
@@ -80,7 +83,9 @@ end
 
 options(m::RadioMenu) = m.options
 
-cancel(m::RadioMenu) = m.selected = -1
+cancellation_marker(m::RadioMenu) = -1
+
+cancel(m::RadioMenu) = m.selected = cancellation_marker(m)
 
 function pick(menu::RadioMenu, cursor::Int)
     menu.selected = cursor
