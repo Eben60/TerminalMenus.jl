@@ -224,7 +224,7 @@ function request(term::REPL.Terminals.TTYTerminal, m::AbstractMenu; cursor::Unio
                 cancel(m)
                 break
             elseif c == 3 # ctrl-c
-                cancel(m)
+                cancel(m) #TODO m = Set([-1])
                 ctrl_c_interrupt(m) ? throw(InterruptException()) : break
             else
                 # will break if keypress returns true
@@ -242,7 +242,7 @@ function request(term::REPL.Terminals.TTYTerminal, m::AbstractMenu; cursor::Unio
         end
     end
     !suppress_output && println(term.out_stream)
-
+    #TODO m == Set([-1]) && return nothing
     return selected(m)
 end
 

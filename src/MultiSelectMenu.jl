@@ -32,6 +32,7 @@ mutable struct MultiSelectMenu{C} <: _ConfiguredMenu{C}
     pagesize::Int
     pageoffset::Int
     selected::Set{Int}
+    quit::Bool #TODO delete?
     config::C
 end
 
@@ -71,16 +72,17 @@ function MultiSelectMenu(options::Array{String,1}; pagesize::Int=10, selected=In
         push!(_selected, item)
     end
 
-    if !isempty(kwargs)
+    if !isempty(kwargs) || !legacy_cancel
         conf = legacy_cancel ? MultiSelectConfig : AbortableMultiSelectConfig
-        MultiSelectMenu(options, pagesize, pageoffset, _selected, conf(; kwargs...))
+        MultiSelectMenu(options, pagesize, pageoffset, _selected, false, conf(; kwargs...))
     else
         warn && Base.depwarn("Legacy `MultiSelectMenu` interface is deprecated, set a configuration option such as `MultiSelectMenu(options; charset=:ascii)` to trigger the new interface.", :MultiSelectMenu)
-        MultiSelectMenu(options, pagesize, pageoffset, _selected, CONFIG)
+        MultiSelectMenu(options, pagesize, pageoffset, _selected, false, CONFIG)
     end
 
 end
 
+MultiSelectMenu(options, pagesize, pageoffset, selected, config,) = MultiSelectMenu(options, pagesize, pageoffset, selected, false, config,)
 
 
 # AbstractMenu implementation functions
@@ -88,13 +90,14 @@ end
 #######################################
 
 header(m::MultiSelectMenu) = "[press: Enter=toggle, a=all, n=none, d=done, q=abort]"
+"[press: Enter=toggle, a=all, n=none, d=done, q=abort]"
 
 options(m::MultiSelectMenu) = m.options
 
 cancel(m::MultiSelectMenu) = m.selected = Set{Int}()
 
-header(m::MultiSelectMenu{AbortableMultiSelectConfig}) = "[press: q=quit, d=done, a=all, n=none]"
-cancel(m::MultiSelectMenu{AbortableMultiSelectConfig}) = m.quit = true #TODO - should it be m.quit = true ??
+header(m::MultiSelectMenu{AbortableMultiSelectConfig}) = "[press: Enter=toggle, a=all, n=none, d=done, q=abort]"
+cancel(m::MultiSelectMenu{AbortableMultiSelectConfig}) = m.quit = true
 selected(m::MultiSelectMenu{AbortableMultiSelectConfig}) = m.quit ? nothing : m.selected
 
 # Do not exit menu when a user selects one of the options
@@ -108,7 +111,7 @@ function pick(menu::MultiSelectMenu, cursor::Int)
     return false #break out of the menu
 end
 
-function writeline(buf::IOBuffer, menu::MultiSelectMenu{MultiSelectConfig}, idx::Int, iscursor::Bool)
+function writeline(buf::IOBuffer, menu::MultiSelectMenu{T}, idx::Int, iscursor::Bool) where T <: Union{MultiSelectConfig, AbortableMultiSelectConfig}
     if idx in menu.selected
         print(buf, menu.config.checked, " ")
     else
