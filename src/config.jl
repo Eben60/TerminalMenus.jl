@@ -23,14 +23,16 @@ end
 
 AbortableMultiSelectConfig(; kwargs...) = AbortableMultiSelectConfig(MultiSelectConfig(; kwargs...))
 
+import Base: getproperty
+
 function get_nestedfield(obj, name::Symbol, nestedfield::Symbol)
-    hasfield(typeof(obj), name) && return getfield(obj, name)
+    # hasfield(typeof(obj), name) && return getfield(obj, name)
     nested = getfield(obj, nestedfield)
-    hasfield(typeof(nested), name) && return getfield(nested, name)
+    hasproperty(nested, name) && return getproperty(nested, name)
     throw(ErrorException("type $(typeof(obj)) has no field $name"))
 end
 
-Base.getproperty(obj::AbortableMultiSelectConfig, name::Symbol) = get_nestedfield(obj, name, :ms_config)
+getproperty(obj::AbortableMultiSelectConfig, name::Symbol) = get_nestedfield(obj, name, :ms_config)
 
 """
     Config(; scroll_wrap=false, ctrl_c_interrupt=true, charset=:ascii, cursor::Char, up_arrow::Char, down_arrow::Char)
