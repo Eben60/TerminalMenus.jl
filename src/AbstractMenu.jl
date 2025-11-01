@@ -32,7 +32,6 @@ All subtypes must be mutable, and must contain the fields `pagesize::Int` and
 These functions must be implemented for all subtypes of AbstractMenu.
 
   - `pick(m::AbstractMenu, cursor::Int)`
-  - `cancel(m::AbstractMenu)`
   - `options(m::AbstractMenu)`   # `numoptions` is an alternative
   - `writeline(buf::IO, m::AbstractMenu, idx::Int, iscursor::Bool)`
 
@@ -43,6 +42,7 @@ If `m` does not have a field called `selected`, then you must also implement `se
 These functions do not need to be implemented for all AbstractMenu
 subtypes.
 
+  - `cancel(m::AbstractMenu)`
   - `header(m::AbstractMenu)`
   - `keypress(m::AbstractMenu, i::UInt32)`
   - `numoptions(m::AbstractMenu)`
@@ -83,14 +83,6 @@ If `true` is returned, `request()` will exit.
 pick(m::AbstractMenu, cursor::Int) = error("unimplemented")
 
 """
-    cancel(m::AbstractMenu)
-
-Define what happens when a user cancels ('q' or ctrl-c) a menu.
-`request()` will always exit after calling this function.
-"""
-cancel(m::AbstractMenu) = error("unimplemented")
-
-"""
     options(m::AbstractMenu)
 
 Return a list of strings to be displayed as options in the current page.
@@ -98,13 +90,6 @@ Return a list of strings to be displayed as options in the current page.
 Alternatively, implement `numoptions`, in which case `options` is not needed.
 """
 options(m::AbstractMenu) = error("unimplemented")
-
-"""
-    cancellation_marker(m::AbstractMenu)
-
-#TODO
-"""
-cancellation_marker(m::AbstractMenu) = :undefined
 
 """
     writeline(buf::IO, m::AbstractMenu, idx::Int, iscursor::Bool)
@@ -136,12 +121,27 @@ end
 ##################################################################
 
 """
+    cancel(m::AbstractMenu)
+
+Define what happens when a user cancels ('q' or ctrl-c) a menu.
+`request()` will always exit after calling this function.
+"""
+function cancel(m::AbstractMenu)
+    if hasproperty(m, :on_cancel) && hasproperty(m, :selected)
+        m.selected = m.on_cancel
+        return nothing
+    end
+
+    error("unimplemented")
+end
+
+"""
     header(m::AbstractMenu)::String
 
 Return a header string to be printed above the menu.
-Defaults to "".
+Defaults to #TODO
 """
-header(m::AbstractMenu) = ""
+header(m::AbstractMenu) = hasproperty(m, :header) ? m.header : ""
 
 """
     keypress(m::AbstractMenu, i::UInt32)::Bool
@@ -169,6 +169,13 @@ Return information about the user-selected option.
 By default it returns `m.selected`.
 """
 selected(m::AbstractMenu) = m.selected
+
+"""
+    cancellation_marker(m::AbstractMenu)
+
+#TODO
+"""
+cancellation_marker(m::AbstractMenu) = :undefined
 
 """
     request(m::AbstractMenu; cursor=1)
@@ -249,8 +256,6 @@ function request(term::REPL.Terminals.TTYTerminal, m::AbstractMenu; cursor::Unio
         end
     end
     !suppress_output && println(term.out_stream)
-
-    selected(m) == cancellation_marker(m) && return m.on_cancel
 
     return selected(m)
 end

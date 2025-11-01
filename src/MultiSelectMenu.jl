@@ -31,14 +31,16 @@ mutable struct MultiSelectMenu{C} <: _ConfiguredMenu{C}
     options::Array{String,1}
     pagesize::Int
     pageoffset::Int
-    selected::Set{Int}
+    selected::Union{Nothing, Set{Int}}
     on_cancel::Union{Nothing, Set{Int}}
+    header::String
     config::C
 end
 
+const default_msm_header = "[press: Enter=toggle, a=all, n=none, d=done, q=abort]"
 
 MultiSelectMenu(options, pagesize, pageoffset, selected, config) = 
-    MultiSelectMenu(options, pagesize, pageoffset, selected, Set{Int64}(), config)
+    MultiSelectMenu(options, pagesize, pageoffset, selected, Set{Int64}(), default_msm_header, config)
 
 """
 
@@ -53,13 +55,16 @@ were selected by the user.
   - `options::Vector{String}`: Options to be displayed
   - `pagesize::Int=10`: The number of options to be displayed at one time, the menu will scroll if length(options) > pagesize
   - `selected=[]`: pre-selected items. `i ∈ selected` means that `options[i]` is preselected.
+  - #TODO
 
 Any additional keyword arguments will be passed to [`TerminalMenus.MultiSelectConfig`](@ref).
 
 !!! compat "Julia 1.6"
     The `selected` argument requires Julia 1.6 or later.
 """
-function MultiSelectMenu(options::Array{String,1}; on_cancel=Set{Int64}(), pagesize::Int=10, selected=Int[], warn::Bool=true, kwargs...)
+function MultiSelectMenu(options::Array{String,1}; 
+    on_cancel=Set{Int64}(), header=default_msm_header, pagesize::Int=10, selected=Int[], warn::Bool=true, kwargs...)
+
     length(options) < 1 && error("MultiSelectMenu must have at least one option")
 
     # if pagesize is -1, use automatic paging
@@ -76,10 +81,10 @@ function MultiSelectMenu(options::Array{String,1}; on_cancel=Set{Int64}(), pages
     end
 
     if isnothing(on_cancel) || !isempty(kwargs)
-        MultiSelectMenu(options, pagesize, pageoffset, _selected, on_cancel, MultiSelectConfig(; kwargs...))
+        MultiSelectMenu(options, pagesize, pageoffset, _selected, on_cancel, header, MultiSelectConfig(; kwargs...))
     else
         warn && Base.depwarn("Legacy `MultiSelectMenu` interface is deprecated, set a configuration option such as `MultiSelectMenu(options; charset=:ascii)` to trigger the new interface.", :MultiSelectMenu)
-        MultiSelectMenu(options, pagesize, pageoffset, _selected, on_cancel, CONFIG)
+        MultiSelectMenu(options, pagesize, pageoffset, _selected, on_cancel, header, CONFIG)
     end
 
 end
@@ -90,13 +95,9 @@ end
 # See AbstractMenu.jl
 #######################################
 
-header(m::MultiSelectMenu) = "[press: Enter=toggle, a=all, n=none, d=done, q=abort]"
-
 options(m::MultiSelectMenu) = m.options
 
-cancellation_marker(m::MultiSelectMenu) = Set{Int}([-1])
-
-cancel(m::MultiSelectMenu) = m.selected = cancellation_marker(m)
+cancel(m::MultiSelectMenu) = m.selected = m.on_cancel
 
 # Do not exit menu when a user selects one of the options
 function pick(menu::MultiSelectMenu, cursor::Int)
