@@ -4,6 +4,8 @@ import REPL
 using TerminalMenus
 using Test
 
+using TerminalMenus: request, Pager, RadioMenu, MultiSelectMenu
+
 function simulate_input(menu::TerminalMenus.AbstractMenu, keys...; kwargs...)
     keydict =  Dict(:up => "\e[A",
                     :down => "\e[B",
