@@ -54,7 +54,7 @@ were selected by the user.
 
   - `options::Vector{String}`: Options to be displayed
   - `pagesize::Int=10`: The number of options to be displayed at one time, the menu will scroll if length(options) > pagesize
-  - `selected=[]`: pre-selected items. `i ∈ selected` means that `options[i]` is preselected.
+  - `selected=Set{Int}()`: pre-selected items. `i ∈ selected` means that `options[i]` is preselected.
   - `on_cancel::Union{Nothing, Set{Int}}=Set{Int64}()`: Value returned if aborted. Default is empty set for backward compat. It is recommended to set `on_cancel=nothing` to be able to discriminate between "nothing selected" vs. "aborted".
   - `header::Union{String, Bool}`: Header displayed above menu. Default is `true`, producing "[press: Enter=toggle, a=all, n=none, d=done, q=abort]". `false`
 results in no header. You can provide your own string.

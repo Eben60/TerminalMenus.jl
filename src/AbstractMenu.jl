@@ -139,7 +139,7 @@ end
     header(m::AbstractMenu)::String
 
 Return a header string to be printed above the menu.
-Defaults to #TODO
+Defaults to `""` if the menu object does not have a `header` field.
 """
 header(m::AbstractMenu) = hasproperty(m, :header) ? m.header : ""
 
@@ -169,13 +169,6 @@ Return information about the user-selected option.
 By default it returns `m.selected`.
 """
 selected(m::AbstractMenu) = m.selected
-
-"""
-    cancellation_marker(m::AbstractMenu)
-
-#TODO
-"""
-cancellation_marker(m::AbstractMenu) = :undefined
 
 """
     request(m::AbstractMenu; cursor=1)

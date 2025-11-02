@@ -51,7 +51,7 @@ user.
   - `pagesize::Int=10`: The number of options to be displayed at one time, the menu will scroll if length(options) > pagesize
   - `keybindings::Vector{Char}=Char[]`: Shortcuts to pick corresponding entry from `options`
   - `on_cancel::Union{Nothing, Int}=-1`: Value returned if aborted. Default is `-1` for backward compat. It is recommended to set `on_cancel=nothing` for consistency.
-  - `header::Union{String, Bool}`: Header displayed above menu. Default is "". `header=true` will produce "[press: Enter=select, q=abort]". 
+  - `header::Union{String, Bool}=false`: Header displayed above the menu. If `true`, the default header "[press: Enter=select, q=abort]" is used. If `false`, no header is displayed. A custom header can be provided as a `String`.
 
 Any additional keyword arguments will be passed to [`TerminalMenus.Config`](@ref).
 
