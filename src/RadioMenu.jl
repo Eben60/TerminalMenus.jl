@@ -50,7 +50,7 @@ user.
   - `options::Vector{String}`: Options to be displayed
   - `pagesize::Int=10`: The number of options to be displayed at one time, the menu will scroll if length(options) > pagesize
   - `keybindings::Vector{Char}=Char[]`: Shortcuts to pick corresponding entry from `options`
-  - `header::Union{String, Bool}`: Header displayed above menu. Default value "", i.e. no header. Set to `header=true` for another default header "[press: Enter=select, q=abort]". 
+  - `header::Union{String, Bool}`: Header displayed above menu. Default is "". `header=true` will produce "[press: Enter=select, q=abort]". 
 
 Any additional keyword arguments will be passed to [`TerminalMenus.Config`](@ref).
 
@@ -73,7 +73,11 @@ function RadioMenu(options::Array{String,1};
     pageoffset = 0
     selected = -1 # none
 
-    header == true && (header = default_radio_menu)
+    if header == true 
+         header = default_radio_menu
+    elseif header == false
+        header = ""
+    end
 
     if isnothing(on_cancel) || !isempty(kwargs)
         RadioMenu(options, keybindings, pagesize, pageoffset, selected, on_cancel, header, Config(; kwargs...))
