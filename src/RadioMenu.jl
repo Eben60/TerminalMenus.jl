@@ -33,7 +33,7 @@ end
 RadioMenu(options, keybindings, pagesize, pageoffset, selected, config) =
     RadioMenu(options, keybindings, pagesize, pageoffset, selected, -1, "", config)
 
-const default_radio_menu = "[press: Enter=select, q=abort]"
+const default_radio_header = "[press: Enter=select, q=abort]"
 
 """
 
@@ -50,6 +50,7 @@ user.
   - `options::Vector{String}`: Options to be displayed
   - `pagesize::Int=10`: The number of options to be displayed at one time, the menu will scroll if length(options) > pagesize
   - `keybindings::Vector{Char}=Char[]`: Shortcuts to pick corresponding entry from `options`
+  - `on_cancel::Union{Nothing, Int}=-1`: Value returned if aborted. Default is `-1` for backward compat. It is recommended to set `on_cancel=nothing` for consistency.
   - `header::Union{String, Bool}`: Header displayed above menu. Default is "". `header=true` will produce "[press: Enter=select, q=abort]". 
 
 Any additional keyword arguments will be passed to [`TerminalMenus.Config`](@ref).
@@ -58,7 +59,7 @@ Any additional keyword arguments will be passed to [`TerminalMenus.Config`](@ref
     The `keybindings` argument requires Julia 1.8 or later.
 """
 function RadioMenu(options::Array{String,1}; 
-    on_cancel=-1, header="", pagesize::Int=10, warn::Bool=true, keybindings::Vector{Char}=Char[], kwargs...)
+    on_cancel=-1, header=false, pagesize::Int=10, warn::Bool=true, keybindings::Vector{Char}=Char[], kwargs...)
 
     length(options) < 1 && error("RadioMenu must have at least one option")
     length(keybindings) in [0, length(options)] || error("RadioMenu must have either no keybindings, or one per option")
@@ -73,13 +74,15 @@ function RadioMenu(options::Array{String,1};
     pageoffset = 0
     selected = -1 # none
 
+    is_not_legacy = isnothing(on_cancel) || (header != false) || !isempty(kwargs) 
+
     if header == true 
-         header = default_radio_menu
+         header = default_radio_header
     elseif header == false
         header = ""
     end
 
-    if isnothing(on_cancel) || !isempty(kwargs)
+    if is_not_legacy
         RadioMenu(options, keybindings, pagesize, pageoffset, selected, on_cancel, header, Config(; kwargs...))
     else
         warn && Base.depwarn("Legacy `RadioMenu` interface is deprecated, set a configuration option such as `RadioMenu(options; charset=:ascii)` to trigger the new interface.", :RadioMenu)

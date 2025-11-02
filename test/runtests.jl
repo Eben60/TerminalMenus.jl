@@ -2,7 +2,7 @@
 
 import REPL
 using TerminalMenus
-using Test
+using Test, Logging
 
 using TerminalMenus: request, Pager, RadioMenu, MultiSelectMenu
 
@@ -29,6 +29,8 @@ include("multiselect_menu.jl")
 include("dynamic_menu.jl")
 include("multiselect_with_skip_menu.jl")
 include("pager.jl")
+include("quit_selection.jl")
+include("custom_header.jl")
 
 # Legacy tests
 include("legacytests/old_radio_menu.jl")

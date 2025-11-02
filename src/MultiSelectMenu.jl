@@ -55,7 +55,9 @@ were selected by the user.
   - `options::Vector{String}`: Options to be displayed
   - `pagesize::Int=10`: The number of options to be displayed at one time, the menu will scroll if length(options) > pagesize
   - `selected=[]`: pre-selected items. `i ∈ selected` means that `options[i]` is preselected.
-  - #TODO
+  - `on_cancel::Union{Nothing, Set{Int}}=Set{Int64}()`: Value returned if aborted. Default is empty set for backward compat. It is recommended to set `on_cancel=nothing` to be able to discriminate between "nothing selected" vs. "aborted".
+  - `header::Union{String, Bool}`: Header displayed above menu. Default is `true`, producing "[press: Enter=toggle, a=all, n=none, d=done, q=abort]". `false`
+results in no header. You can provide your own string.
 
 Any additional keyword arguments will be passed to [`TerminalMenus.MultiSelectConfig`](@ref).
 
@@ -63,7 +65,7 @@ Any additional keyword arguments will be passed to [`TerminalMenus.MultiSelectCo
     The `selected` argument requires Julia 1.6 or later.
 """
 function MultiSelectMenu(options::Array{String,1}; 
-    on_cancel=Set{Int64}(), header=default_msm_header, pagesize::Int=10, selected=Int[], warn::Bool=true, kwargs...)
+    on_cancel=Set{Int64}(), header=true, pagesize::Int=10, selected=Int[], warn::Bool=true, kwargs...)
 
     length(options) < 1 && error("MultiSelectMenu must have at least one option")
 
@@ -80,7 +82,15 @@ function MultiSelectMenu(options::Array{String,1};
         push!(_selected, item)
     end
 
-    if isnothing(on_cancel) || !isempty(kwargs)
+    is_not_legacy = isnothing(on_cancel) || (header != true)  || !isempty(kwargs) 
+
+    if header == true 
+        header = default_msm_header
+    elseif header == false
+        header = ""
+    end
+
+    if is_not_legacy
         MultiSelectMenu(options, pagesize, pageoffset, _selected, on_cancel, header, MultiSelectConfig(; kwargs...))
     else
         warn && Base.depwarn("Legacy `MultiSelectMenu` interface is deprecated, set a configuration option such as `MultiSelectMenu(options; charset=:ascii)` to trigger the new interface.", :MultiSelectMenu)
